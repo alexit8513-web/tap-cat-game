@@ -386,9 +386,9 @@ def main():
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     application.add_handler(MessageHandler(filters.StatusUpdate.WEB_APP_DATA, handle_web_app_data))
     application.add_handler(CallbackQueryHandler(show_my_stats, pattern='^my_stats$'))
-    application.add_handler(CallbackQueryHandler(show_top_players, pattern='^top_players$'))
-    application.add_handler(CallbackQueryHandler(show_help, pattern='^help$'))
-    application.add_handler(CallbackQueryHandler(back_to_menu, pattern='^back_to_menu$'))
+    application.add_handler(CallbackQueryHandler(show_top_players, pattern='top_players'))
+    application.add_handler(CallbackQueryHandler(show_help, pattern='help'))
+    application.add_handler(CallbackQueryHandler(back_to_menu, pattern='back_to_menu'))
     
     # Добавляем обработчик ошибок
     application.add_error_handler(error_handler)
