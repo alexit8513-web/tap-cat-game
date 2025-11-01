@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tap Cat Game</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .game-container {
+            text-align: center;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .stats {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .stat {
+            margin: 8px 0;
+            font-size: 18px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .cat {
+            width: 200px;
+            height: 200px;
+            background: linear-gradient(45deg, #ff8a00, #ff6b6b);
+            border-radius: 50%;
+            margin: 20px auto;
+            cursor: pointer;
+            position: relative;
+            transition: transform 0.1s;
+            box-shadow: 0 10px 30px rgba(255, 107, 107, 0.4);
+        }
+
+        .cat:active {
+            transform: scale(0.95);
+        }
+
+        .cat-face {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .eyes {
+            display: flex;
+            gap: 40px;
+            margin-bottom: 15px;
+        }
+
+        .eye {
+            width: 25px;
+            height: 35px;
+            background: white;
+            border-radius: 50%;
+            position: relative;
+        }
+
+        .eye::after {
+            content: '';
+            position: absolute;
+            width: 15px;
+            height: 15px;
+            background: #2c3e50;
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .nose {
+            width: 20px;
+            height: 15px;
+            background: #ff6b8b;
+            border-radius: 50%;
+            margin: 0 auto 8px;
+            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+        }
+
+        .mouth {
+            width: 30px;
+            height: 5px;
+            background: #2c3e50;
+            border-radius: 5px;
+            margin: 0 auto;
+        }
+
+        .tap-text {
+            font-size: 20px;
+            margin-top: 20px;
+            font-weight: bold;
+        }
+
+        .effects {
+            position: fixed;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            width: 100%;
+            height: 100%;
+        }
+
+        .particle {
+            position: absolute;
+            font-weight: bold;
+            font-size: 20px;
+            animation: floatUp 1s ease-out forwards;
+        }
+
+        @keyframes floatUp {
+            0% {
+                transform: translateY(0);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100px);
+                opacity: 0;
+            }
+        }
+
+        .level-up {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 48px;
+            font-weight: bold;
+            color: #ffd700;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+            animation: levelUp 2s ease-out forwards;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        @keyframes levelUp {
+            0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+            50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
+        }
+
+        .shop {
+            margin-top: 20px;
+        }
+
+        .shop-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 10px;
+            margin: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .shop-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="stats">
+            <div class="stat">
+                <span>⭐ Очки:</span>
+                <span id="score">0</span>
+            </div>
+            <div class="stat">
+                <span>💰 Деньги:</span>
+                <span id="money">100</span>
+            </div>
+            <div class="stat">
+                <span>🎯 Уровень:</span>
+                <span id="level">1</span>
+            </div>
+            <div class="stat">
+                <span>💪 Сила:</span>
+                <span id="power">1</span>
+            </div>
+        </div>
+
+        <div class="cat" id="cat">
+            <div class="cat-face">
+                <div class="eyes">
+                    <div class="eye left"></div>
+                    <div class="eye right"></div>
+                </div>
+                <div class="nose"></div>
+                <div class="mouth"></div>
+            </div>
+        </div>
+
+        <div class="tap-text">Тапай меня! 🐱</div>
+
+        <div class="shop">
+            <button class="shop-btn" onclick="buyUpgrade('click')">💪 Усилитель (+1) - 50💰</button>
+            <button class="shop-btn" onclick="buyUpgrade('auto')">⚡ Автоклик - 100💰</button>
+        </div>
+    </div>
+
+    <div class="effects" id="effects"></div>
+
+    <script>
+        // Игровые переменные
+        let score = 0;
+        let money = 100;
+        let level = 1;
+        let clickPower = 1;
+        let autoClickPower = 0;
+        let autoClickInterval = null;
+
+        // Инициализация Telegram Web App
+        let tg = window.Telegram.WebApp;
+        tg.expand();
+
+        // Основная функция тапа
+        function tapCat() {
+            // Добавляем очки и деньги
+            score += clickPower;
+            money += clickPower;
+            
+            // Обновляем интерфейс
+            updateUI();
+            
+            // Создаем эффект частиц
+            createParticle(`+${clickPower}`, '#ffd700');
+            
+            // Анимация кота
+            animateCat();
+            
+            // Проверяем уровень
+            checkLevelUp();
+            
+            // Сохраняем прогресс
+            saveProgress();
+        }
+
+        // Функция покупки улучшений
+        function buyUpgrade(type) {
+            if (type === 'click') {
+                if (money >= 50) {
+                    money -= 50;
+                    clickPower += 1;
+                    updateUI();
+                    saveProgress();
+                    createParticle('💪 +1 сила!', '#00ff00');
+                }
+            } else if (type === 'auto') {
+                if (money >= 100 && autoClickPower === 0) {
+                    money -= 100;
+                    autoClickPower = 1;
+                    startAutoClick();
+                    updateUI();
+                    saveProgress();
+                    createParticle('⚡ Автоклик!', '#00ffff');
+                }
+            }
+        }
+
+        // Запуск автокликера
+        function startAutoClick() {
+            if (autoClickInterval) clearInterval(autoClickInterval);
+            autoClickInterval = setInterval(() => {
+                if (autoClickPower > 0) {
+                    score += autoClickPower;
+                    money += autoClickPower;
+                    updateUI();
+                    createParticle(`+${autoClickPower}`, '#00ff00');
+                }
+            }, 1000);
+        }
+
+        // Обновление интерфейса
+        function updateUI() {
+            document.getElementById('score').textContent = score;
+            document.getElementById('money').textContent = money;
+            document.getElementById('level').textContent = level;
+            document.getElementById('power').textContent = clickPower;
+        }
+
+        // Создание эффекта частиц
+        function createParticle(text, color) {
+            const effects = document.getElementById('effects');
+            const particle = document.createElement('div');
+            
+            particle.className = 'particle';
+            particle.textContent = text;
+            particle.style.color = color;
+            particle.style.left = Math.random() * 80 + 10 + '%';
+            particle.style.top = '50%';
+            
+            effects.appendChild(particle);
+            
+            // Удаляем частицу после анимации
+            setTimeout(() => {
+                particle.remove();
+            }, 1000);
+        }
+
+        // Анимация кота
+        function animateCat() {
+            const cat = document.getElementById('cat');
+            cat.style.transform = 'scale(0.95)';
+            
+            setTimeout(() => {
+                cat.style.transform = 'scale(1)';
+            }, 100);
+        }
+
+        // Проверка повышения уровня
+        function checkLevelUp() {
+            const nextLevelScore = level * 100;
+            if (score >= nextLevelScore) {
+                level++;
+                showLevelUp();
+            }
+        }
+
+        // Показ анимации уровня
+        function showLevelUp() {
+            const levelUp = document.createElement('div');
+            levelUp.className = 'level-up';
+            levelUp.textContent = `Уровень ${level}! 🎉`;
+            
+            document.body.appendChild(levelUp);
+            
+            setTimeout(() => {
+                levelUp.remove();
+            }, 2000);
+        }
+
+        // Сохранение прогресса
+        function saveProgress() {
+            // Используем localStorage как временное решение
+            localStorage.setItem('tapCat_score', score);
+            localStorage.setItem('tapCat_money', money);
+            localStorage.setItem('tapCat_level', level);
+            localStorage.setItem('tapCat_clickPower', clickPower);
+            localStorage.setItem('tapCat_autoClickPower', autoClickPower);
+        }
+
+        // Загрузка прогресса
+        function loadProgress() {
+            const savedScore = localStorage.getItem('tapCat_score');
+            const savedMoney = localStorage.getItem('tapCat_money');
+            const savedLevel = localStorage.getItem('tapCat_level');
+            const savedClickPower = localStorage.getItem('tapCat_clickPower');
+            const savedAutoClickPower = localStorage.getItem('tapCat_autoClickPower');
+            
+            if (savedScore) score = parseInt(savedScore);
+            if (savedMoney) money = parseInt(savedMoney);
+            if (savedLevel) level = parseInt(savedLevel);
+            if (savedClickPower) clickPower = parseInt(savedClickPower);
+            if (savedAutoClickPower) {
+                autoClickPower = parseInt(savedAutoClickPower);
+                if (autoClickPower > 0) startAutoClick();
+            }
+            
+            updateUI();
+        }
+
+        // Инициализация игры
+        document.addEventListener('DOMContentLoaded', () => {
+            // Вешаем обработчик на кота
+            document.getElementById('cat').addEventListener('click', tapCat);
+            
+            // Загружаем сохраненный прогресс
+            loadProgress();
+            
+            console.log('🐱 Игра Tap Cat загружена!');
+        });
+    </script>
+</body>
+</html>
